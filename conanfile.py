@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import get, copy, rm, save
 
+
 class LlvmToolchainConan(ConanFile):
     name = "llvm-toolchain"
     version = "20.1.0"
@@ -65,7 +66,6 @@ class LlvmToolchainConan(ConanFile):
 
     def package_id(self):
         self.info.settings_target = self.settings_target
-        self.info.settings_target.rm_safe("os")
         self.info.settings_target.rm_safe("compiler")
         self.info.settings_target.rm_safe("build_type")
 
