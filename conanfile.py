@@ -86,17 +86,13 @@ class LlvmToolchainConan(ConanFile):
             "ld": "llvm-ld"
         })
 
-
     def __package_info_macos(self):
         self.cpp_info.bindirs.append(os.path.join(self.package_folder, "bin"))
 
         sdk_path = self.conf.get("tools.apple:sdk_path")
         if not sdk_path:
-            try:
-                sdk_path = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).decode(
-                    "utf-8").strip()
-            except Exception:
-                pass
+            sdk_path = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).decode(
+                "utf-8").strip()
 
         self.buildenv_info.define("SDKROOT", sdk_path)
 
