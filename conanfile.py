@@ -17,14 +17,21 @@ class LlvmToolchainConan(ConanFile):
         pass
 
     def build(self):
-        if is_apple_os(self):
+        if self.settings.os == "Macos":
             get(self,
                 f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{self.version}/LLVM-{self.version}-macOS-ARM64.tar.xz",
                 strip_root=True)
-        else:
+        elif self.settings.os == "Linux":
             get(self,
                 f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{self.version}/LLVM-{self.version}-Linux-X64.tar.xz",
                 strip_root=True)
+        elif self.settings.os == "Windows":
+            get(self,
+                f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{self.version}/clang+llvm-{self.version}-x86_64-pc-windows-msvc.tar.xz",
+                strip_root=True)
+        else:
+            raise ConanInvalidConfiguration("Configuration not supported")
+
 
     def package_id(self):
         self.info.settings_target = self.settings_target
@@ -60,7 +67,8 @@ class LlvmToolchainConan(ConanFile):
             "ranlib": "llvm-ranlib",
             "strip": "llvm-strip",
             "asm": "llvm-as",
-            "ld": "llvm-ld"})
+            "ld": "llvm-ld"
+        })
 
 
     def __package_info_macos(self):
@@ -79,5 +87,4 @@ class LlvmToolchainConan(ConanFile):
         self.conf_info.define("tools.build:compiler_executables", {
             "c": "clang",
             "cpp": "clang++",
-
         })
