@@ -45,23 +45,9 @@ class LlvmToolchainConan(ConanFile):
         save(self, "LICENSE", "LLVM Toolchain\n"
              "License: Apache License v2.0 with LLVM Exceptions\n"
              "https://github.com/llvm/llvm-project/blob/main/LICENSE.TXT")
-        pass
 
     def build(self):
-        if self.settings.os == "Macos":
-            get(self,
-                f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{self.version}/LLVM-{self.version}-macOS-ARM64.tar.xz",
-                strip_root=True)
-        elif self.settings.os == "Linux":
-            get(self,
-                f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{self.version}/LLVM-{self.version}-Linux-X64.tar.xz",
-                strip_root=True)
-        elif self.settings.os == "Windows":
-            get(self,
-                f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{self.version}/clang+llvm-{self.version}-x86_64-pc-windows-msvc.tar.xz",
-                strip_root=True)
-        else:
-            raise ConanInvalidConfiguration("Configuration not supported")
+        get(self, self._get_download_link(), strip_root=True)
 
 
     def package_id(self):
