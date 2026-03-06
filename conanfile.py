@@ -12,7 +12,7 @@ class LlvmToolchainConan(ConanFile):
     package_type = "application"
 
     _supported_archs = ["x86_64", "armv8", "armv8.3"]
-    _supported_os = ["Macos", "Linux", "Windows"]
+    _supported_os = ["Macos", "Linux"]
 
     def _archs64(self):
         return ["armv8", "armv8.3"]
@@ -56,9 +56,13 @@ class LlvmToolchainConan(ConanFile):
         self.info.settings_target.rm_safe("build_type")
 
     def package(self):
-        dirs_to_copy = ["bin", "include", "lib", "libexec"]
+        dirs_to_copy = ["include", "lib/clang"]
         for dir_name in dirs_to_copy:
             copy(self, pattern=f"{dir_name}/*", src=self.build_folder, dst=self.package_folder, keep_path=True)
+
+        executables_to_copy = ["clang", "clang++", "llvm-ar", "llvm-ranlib", "llvm-strip", "llvm-as", "llvm-ld", "clang-20", "llvm-objcopy"]
+        for executable_name in executables_to_copy:
+            copy(self, pattern=f"bin/{executable_name}", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
         if self.settings.os == "Macos":
             libdir = os.path.join(self.package_folder, "lib")
@@ -74,8 +78,6 @@ class LlvmToolchainConan(ConanFile):
             self.__package_info_non_macos()
 
     def __package_info_non_macos(self):
-        self.cpp_info.bindirs.append(os.path.join(self.package_folder, "bin"))
-
         self.conf_info.define("tools.build:compiler_executables", {
             "c": "clang",
             "cpp": "clang++",
@@ -87,8 +89,6 @@ class LlvmToolchainConan(ConanFile):
         })
 
     def __package_info_macos(self):
-        self.cpp_info.bindirs.append(os.path.join(self.package_folder, "bin"))
-
         sdk_path = self.conf.get("tools.apple:sdk_path")
         if not sdk_path:
             sdk_path = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).decode(
