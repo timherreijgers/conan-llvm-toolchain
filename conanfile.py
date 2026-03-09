@@ -60,7 +60,7 @@ class LlvmToolchainConan(ConanFile):
         for dir_name in dirs_to_copy:
             copy(self, pattern=f"{dir_name}/*", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
-        executables_to_copy = ["clang", "clang++", "llvm-ar", "llvm-ranlib", "llvm-strip", "llvm-as", "llvm-ld", "clang-20", "llvm-objcopy"]
+        executables_to_copy = ["clang", "clang++", "llvm-ar", "llvm-ranlib", "llvm-strip", "llvm-as", "llvm-ld", "clang-20", "llvm-objcopy", "clang-scan-deps"]
         for executable_name in executables_to_copy:
             copy(self, pattern=f"bin/{executable_name}", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
