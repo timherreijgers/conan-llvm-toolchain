@@ -51,7 +51,7 @@ class LlvmToolchainConan(ConanFile):
 
 
     def package_id(self):
-        self.info.settings_target = self.settings_target
+        self.info.settings_target = self.settings_build
         self.info.settings_target.rm_safe("compiler")
         self.info.settings_target.rm_safe("build_type")
 
