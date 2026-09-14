@@ -7,12 +7,11 @@ from conan.tools.files import get, copy, rm, save
 
 class LlvmToolchainConan(ConanFile):
     name = "llvm-toolchain"
-    version = "20.1.0"
     settings = "os", "arch"
     package_type = "application"
 
     _supported_archs = ["x86_64", "armv8", "armv8.3"]
-    _supported_os = ["Macos", "Linux"]
+    _supported_os = ["Macos", "Linux", "Windows"]
 
     def _archs64(self):
         return ["armv8", "armv8.3"]
