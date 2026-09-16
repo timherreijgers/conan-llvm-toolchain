@@ -60,10 +60,6 @@ class LlvmToolchainConan(ConanFile):
         for dir_name in dirs_to_copy:
             copy(self, pattern=f"{dir_name}/*", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
-        # executables_to_copy = ["clang", "clang++", "llvm-ar", "llvm-ranlib", "llvm-strip", "llvm-as", "llvm-ld", "clang-22", "llvm-objcopy", "clang-scan-deps"]
-        # for executable_name in executables_to_copy:
-        #     copy(self, pattern=f"bin/{executable_name}", src=self.build_folder, dst=self.package_folder, keep_path=True)
-
         executable_patterns = ["clang(\.exe)*", "clang\+\+(\.exe)*", "llvm-ar(\.exe)*", "llvm-ranlib(\.exe)*", "llvm-strip(\.exe)*", "llvm-as(\.exe)*", "llvm-ld(\.exe)*", "clang-[0-9]+(\.exe)*", "llvm-objcopy(\.exe)*", "clang-scan-deps(\.exe)*"]
         for executable_pattern in executable_patterns:
             regex = re.compile(executable_pattern)
@@ -72,6 +68,19 @@ class LlvmToolchainConan(ConanFile):
                 if regex.fullmatch(filename):
                     copy(self, pattern=f"bin/{filename}", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
+
+        clang_version_pattern = re.compile(r"^clang-[0-9]+$")
+
+        bin_dir = os.path.join(self.build_folder, "bin")
+        for filename in os.listdir(bin_dir):
+            if clang_version_pattern.fullmatch(filename):
+                copy(
+                    self,
+                    pattern=f"bin/{filename}",
+                    src=self.build_folder,
+                    dst=self.package_folder,
+                    keep_path=True,
+                )
 
         if self.settings.os == "Macos":
             libdir = os.path.join(self.package_folder, "lib")
@@ -104,6 +113,11 @@ class LlvmToolchainConan(ConanFile):
                 "utf-8").strip()
 
         self.buildenv_info.define("SDKROOT", sdk_path)
+        self.conf_info.define("tools.build:cxxflags", [
+            "-nostdinc++",
+            "-isystem",
+            f"{sdk_path}/usr/include/c++/v1",
+        ])
 
         self.conf_info.define("tools.build:compiler_executables", {
             "c": "clang",
