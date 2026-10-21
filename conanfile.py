@@ -56,7 +56,7 @@ class LlvmToolchainConan(ConanFile):
         self.info.settings_target.rm_safe("build_type")
 
     def package(self):
-        dirs_to_copy = ["include", "lib/clang"]
+        dirs_to_copy = ["include", "lib"]
         for dir_name in dirs_to_copy:
             copy(self, pattern=f"{dir_name}/*", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
@@ -90,12 +90,30 @@ class LlvmToolchainConan(ConanFile):
         copy(self, "LICENSE", src=self.build_folder, dst=os.path.join(self.package_folder, "licenses"), keep_path=False)
 
     def package_info(self):
+        if self.settings.os == "Linux":
+            target = "x86_64-unknown-linux-gnu" if self.settings.arch == "x86_64" else "aarch64-unknown-linux-gnu"
+            include_dir = os.path.join(self.package_folder, "include", "c++", "v1")
+            target_include_dir = os.path.join(self.package_folder, "include", target, "c++", "v1")
+            lib_dir = os.path.join(self.package_folder, "lib", target)
+
+            self.conf_info.define("tools.build:cxxflags", [
+                "-nostdinc++",
+                "-isystem",
+                include_dir,
+                "-isystem",
+                target_include_dir,
+            ])
+            link_flags = [
+                f"-L{lib_dir}",
+                "-lc++",
+            ]
+            self.conf_info.define("tools.build:exelinkflags", link_flags)
+            self.conf_info.define("tools.build:sharedlinkflags", link_flags)
+            self.buildenv_info.append_path("LD_LIBRARY_PATH", lib_dir)
+
         if self.settings.os == "Macos":
             self.__package_info_macos()
-        else:
-            self.__package_info_non_macos()
 
-    def __package_info_non_macos(self):
         self.conf_info.define("tools.build:compiler_executables", {
             "c": "clang",
             "cpp": "clang++",
@@ -103,23 +121,15 @@ class LlvmToolchainConan(ConanFile):
             "ranlib": "llvm-ranlib",
             "strip": "llvm-strip",
             "asm": "llvm-as",
-            "ld": "llvm-ld"
         })
+
 
     def __package_info_macos(self):
         sdk_path = self.conf.get("tools.apple:sdk_path")
         if not sdk_path:
-            sdk_path = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"]).decode(
-                "utf-8").strip()
+            sdk_path = subprocess.check_output(
+                ["xcrun", "--sdk", "macosx", "--show-sdk-path"],
+                text=True,
+            ).strip()
 
         self.buildenv_info.define("SDKROOT", sdk_path)
-        self.conf_info.define("tools.build:cxxflags", [
-            "-nostdinc++",
-            "-isystem",
-            f"{sdk_path}/usr/include/c++/v1",
-        ])
-
-        self.conf_info.define("tools.build:compiler_executables", {
-            "c": "clang",
-            "cpp": "clang++",
-        })
