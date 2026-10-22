@@ -5,7 +5,12 @@ from conan.tools.cmake import cmake_layout, CMake, CMakeToolchain
 
 class GBEmulatorRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeDeps", "CMakeToolchain"
+    generators = "CMakeDeps"
+
+    def generate(self):
+        tc = CMakeToolchain(self, generator="Ninja")
+        tc.variables["CMAKE_CXX_MODULE_STD"] = "ON"
+        tc.generate()
 
     def requirements(self):
         pass

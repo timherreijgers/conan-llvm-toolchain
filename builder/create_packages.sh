@@ -13,11 +13,11 @@ for version in "22.1.8"; do
 
     export LLVM_VERSION=${version%%.*}
 
-    conan create .. --version=$version -pr:a=linux-x86_64.jinja
+    # conan create .. --version=$version -pr:a=linux-x86_64.jinja
 #    conan create .. --version=$version -pr:a=linux-armv8.jinja
 #    conan create .. --version=$version -pr:a=win-x86_64.jinja
 #    conan create .. --version=$version -pr:a=win-armv8.jinja
-#    conan create .. --version=$version -pr:a=macos-armv8.jinja
+   conan create .. --version=$version -pr:a=macos-armv8.jinja
 
 #    conan upload -r tims-conan-local "llvm-toolchain/$version"
 
