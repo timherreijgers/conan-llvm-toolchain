@@ -3,7 +3,7 @@ import subprocess
 import re
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.files import get, copy, rm, save
+from conan.tools.files import get, copy, save
 
 
 class LlvmToolchainConan(ConanFile):
@@ -56,7 +56,7 @@ class LlvmToolchainConan(ConanFile):
         self.info.settings_target.rm_safe("build_type")
 
     def package(self):
-        dirs_to_copy = ["include", "lib"]
+        dirs_to_copy = ["include", "lib", "share/libc++/v1"]
         for dir_name in dirs_to_copy:
             copy(self, pattern=f"{dir_name}/*", src=self.build_folder, dst=self.package_folder, keep_path=True)
 
@@ -82,34 +82,13 @@ class LlvmToolchainConan(ConanFile):
                     keep_path=True,
                 )
 
-        if self.settings.os == "Macos":
-            libdir = os.path.join(self.package_folder, "lib")
-            for pattern in ("libc++.dylib", "libc++.1.dylib", "libc++.1.0.dylib", "libc++abi.dylib", "libc++abi.1.dylib", "libc++abi.1.0.dylib"):
-                rm(self, pattern=pattern, folder=libdir, recursive=False)
-        
         copy(self, "LICENSE", src=self.build_folder, dst=os.path.join(self.package_folder, "licenses"), keep_path=False)
 
     def package_info(self):
-        if self.settings.os == "Linux":
-            target = "x86_64-unknown-linux-gnu" if self.settings.arch == "x86_64" else "aarch64-unknown-linux-gnu"
-            include_dir = os.path.join(self.package_folder, "include", "c++", "v1")
-            target_include_dir = os.path.join(self.package_folder, "include", target, "c++", "v1")
-            lib_dir = os.path.join(self.package_folder, "lib", target)
+        self.cpp_info.libdirs = []
 
-            self.conf_info.define("tools.build:cxxflags", [
-                "-nostdinc++",
-                "-isystem",
-                include_dir,
-                "-isystem",
-                target_include_dir,
-            ])
-            link_flags = [
-                f"-L{lib_dir}",
-                "-lc++",
-            ]
-            self.conf_info.define("tools.build:exelinkflags", link_flags)
-            self.conf_info.define("tools.build:sharedlinkflags", link_flags)
-            self.buildenv_info.append_path("LD_LIBRARY_PATH", lib_dir)
+        if self.settings.os == "Linux":
+            self.__package_info_linux()
 
         if self.settings.os == "Macos":
             self.__package_info_macos()
@@ -123,8 +102,35 @@ class LlvmToolchainConan(ConanFile):
             "asm": "llvm-as",
         })
 
+    def __package_info_linux(self):
+        target = "x86_64-unknown-linux-gnu" if self.settings.arch == "x86_64" else "aarch64-unknown-linux-gnu"
+        include_dir = os.path.join(self.package_folder, "include", "c++", "v1")
+        target_include_dir = os.path.join(self.package_folder, "include", target, "c++", "v1")
+        lib_dir = os.path.join(self.package_folder, "lib", target)
+
+        self.conf_info.define("tools.build:cxxflags", [
+            "-nostdinc++",
+            "-isystem",
+            include_dir,
+            "-isystem",
+            target_include_dir,
+        ])
+        link_flags = [
+            f"-L{lib_dir}",
+            "-lc++",
+        ]
+        self.conf_info.define("tools.build:exelinkflags", link_flags)
+        self.conf_info.define("tools.build:sharedlinkflags", link_flags)
+        self.buildenv_info.append_path("LD_LIBRARY_PATH", lib_dir)
 
     def __package_info_macos(self):
+        include_dir = os.path.join(self.package_folder, "include", "c++", "v1")
+        self.conf_info.define("tools.build:cxxflags", [
+            "-nostdinc++",
+            "-isystem",
+            include_dir,
+        ])
+
         sdk_path = self.conf.get("tools.apple:sdk_path")
         if not sdk_path:
             sdk_path = subprocess.check_output(
@@ -133,3 +139,15 @@ class LlvmToolchainConan(ConanFile):
             ).strip()
 
         self.buildenv_info.define("SDKROOT", sdk_path)
+
+        lib_dir = os.path.join(self.package_folder, "lib")
+        link_flags = [
+            f"-L{lib_dir}",
+            f"-Wl,-rpath,{lib_dir}",
+            "-lc++abi",
+            "-lunwind",
+            # dyld can coalesce symbols with system libc++; ensure it is initialized.
+            "-Wl,-needed_library,/usr/lib/libc++.1.dylib",
+        ]
+        self.conf_info.define("tools.build:exelinkflags", link_flags)
+        self.conf_info.define("tools.build:sharedlinkflags", link_flags)

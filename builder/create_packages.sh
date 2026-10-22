@@ -17,7 +17,7 @@ for version in "22.1.8"; do
 #    conan create .. --version=$version -pr:a=linux-armv8.jinja
 #    conan create .. --version=$version -pr:a=win-x86_64.jinja
 #    conan create .. --version=$version -pr:a=win-armv8.jinja
-   conan create .. --version=$version -pr:a=macos-armv8.jinja
+   conan create .. --version=$version -pr:a=macos-armv8.jinja --build=missing --build-test="gtest/*"
 
 #    conan upload -r tims-conan-local "llvm-toolchain/$version"
 

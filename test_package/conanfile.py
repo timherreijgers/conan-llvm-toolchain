@@ -13,7 +13,7 @@ class GBEmulatorRecipe(ConanFile):
         tc.generate()
 
     def requirements(self):
-        pass
+        self.requires("gtest/1.18.0")
 
     def build_requirements(self):
         self.tool_requires("llvm-toolchain/22.1.8")
